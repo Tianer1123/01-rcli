@@ -1,5 +1,6 @@
-use std::path::Path;
+use std::{path::Path, str::FromStr};
 
+use anyhow::Result;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -15,6 +16,14 @@ pub enum SubCommand {
     Csv(CsvOpts),
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum OutputFormat {
+    Json,
+    Yaml,
+}
+
+impl OutputFormat {}
+
 #[derive(Debug, Parser)]
 pub struct CsvOpts {
     #[arg(short, long, value_parser = verify_input)]
@@ -23,6 +32,9 @@ pub struct CsvOpts {
     #[arg(short, long, default_value = "output.json")] // "output.json".into()
     pub output: String,
 
+    #[arg(long, value_parser = parse_format, default_value = "json")]
+    pub format: OutputFormat,
+
     #[arg(short, long, default_value_t = ',')]
     pub delimiter: char,
 
@@ -30,9 +42,38 @@ pub struct CsvOpts {
     pub header: bool,
 }
 
-fn verify_input(filename: &str) -> Result<String, String> {
+fn verify_input(filename: &str) -> Result<String> {
     match Path::new(filename).exists() {
         true => Ok(filename.into()),
-        false => Err(format!("{} not exists", filename)),
+        false => anyhow::bail!("{} not exists", filename),
+    }
+}
+
+fn parse_format(s: &str) -> Result<OutputFormat> {
+    match s.to_lowercase().as_str() {
+        "json" => Ok(OutputFormat::Json),
+        "yaml" => Ok(OutputFormat::Yaml),
+        _ => anyhow::bail!("{} not supported", s),
+    }
+}
+
+impl From<OutputFormat> for &'static str {
+    fn from(value: OutputFormat) -> Self {
+        match value {
+            OutputFormat::Json => "json",
+            OutputFormat::Yaml => "yaml",
+        }
+    }
+}
+
+impl FromStr for OutputFormat {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "json" => Ok(OutputFormat::Json),
+            "yaml" => Ok(OutputFormat::Yaml),
+            _ => anyhow::bail!("{} not supported", s),
+        }
     }
 }
