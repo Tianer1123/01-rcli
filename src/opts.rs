@@ -1,4 +1,4 @@
-use std::{path::Path, str::FromStr};
+use std::{fmt, path::Path, str::FromStr};
 
 use anyhow::Result;
 use clap::Parser;
@@ -29,8 +29,8 @@ pub struct CsvOpts {
     #[arg(short, long, value_parser = verify_input)]
     pub input: String,
 
-    #[arg(short, long, default_value = "output.json")] // "output.json".into()
-    pub output: String,
+    #[arg(short, long)] // "output.json".into()
+    pub output: Option<String>,
 
     #[arg(long, value_parser = parse_format, default_value = "json")]
     pub format: OutputFormat,
@@ -73,7 +73,13 @@ impl FromStr for OutputFormat {
         match s.to_lowercase().as_str() {
             "json" => Ok(OutputFormat::Json),
             "yaml" => Ok(OutputFormat::Yaml),
-            _ => anyhow::bail!("{} not supported", s),
+            _ => Err(anyhow::anyhow!("Invalid format")),
         }
+    }
+}
+
+impl fmt::Display for OutputFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", Into::<&str>::into(*self))
     }
 }
