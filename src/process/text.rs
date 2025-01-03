@@ -20,6 +20,10 @@ pub trait KeyLoader {
         Self: Sized;
 }
 
+// pub trait KeyGenerator {
+//     fn generate() -> Result<Vec<Vec<u8>>>;
+// }
+
 pub struct Blake3 {
     key: [u8; 32],
 }
@@ -33,6 +37,7 @@ pub struct Ed25519Verifier {
 }
 
 use crate::{get_reader, TextSignFormat};
+
 pub fn process_text_sign(input: &str, key: &str, format: TextSignFormat) -> Result<()> {
     let mut reader = get_reader(input)?;
     let signed = match format {
@@ -85,7 +90,7 @@ impl TextVerify for Blake3 {
     fn verify(&self, mut reader: impl Read, sig: &[u8]) -> Result<bool> {
         let mut buf = Vec::new();
         reader.read_to_end(&mut buf)?;
-        let hash = blake3::hash(&buf);
+        let hash = blake3::keyed_hash(&self.key, &buf);
         let hash = hash.as_bytes();
         Ok(hash == sig)
     }
@@ -131,6 +136,14 @@ impl KeyLoader for Ed25519Verifier {
     }
 }
 
+// impl KeyGenerator for Blake3 {
+//     fn generate() -> Result<Vec<Vec<u8>>> {
+//         let key = [0u8; 32];
+//         let key = key.to_vec();
+//         Ok(vec![key])
+//     }
+// }
+
 impl Blake3 {
     pub fn new(key: [u8; 32]) -> Self {
         Self { key }
@@ -165,5 +178,23 @@ impl Ed25519Verifier {
         let key = VerifyingKey::from_bytes(key.try_into()?)?;
         let verifier = Ed25519Verifier::new(key);
         Ok(verifier)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_blake3_sig_verify() -> Result<()> {
+        let blake3 = Blake3::load("fixtures/blake3.txt")?;
+
+        let data = b"hello world";
+        let sig = blake3.sign(&mut &data[..])?;
+        println!("sig: {}", URL_SAFE_NO_PAD.encode(&sig));
+        assert!(blake3.verify(&data[..], &sig)?);
+
+        Ok(())
     }
 }

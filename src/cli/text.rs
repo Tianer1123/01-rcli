@@ -9,9 +9,10 @@ use super::verify_file;
 pub enum TextSubCommand {
     #[command(about = "Sign a message with a private/shared key")]
     Sign(TextSignOpts),
-
     #[command(about = "Verify a signed message")]
     Verify(TextVerifyOpts),
+    #[command(about = "Generate a key")]
+    Generate(TextGenerateKeyOpts),
 }
 
 #[derive(Debug, Parser)]
@@ -33,7 +34,13 @@ pub struct TextVerifyOpts {
     #[arg(long, value_parser = parse_format, default_value = "blake3")]
     pub format: TextSignFormat,
     #[arg(short, long)]
-    pub sign: String,
+    pub sig: String,
+}
+
+#[derive(Debug, Parser)]
+pub struct TextGenerateKeyOpts {
+    #[arg(long, value_parser = parse_format, default_value = "blake3")]
+    pub format: TextSignFormat,
 }
 
 #[derive(Debug, Clone, Copy)]

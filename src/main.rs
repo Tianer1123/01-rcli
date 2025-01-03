@@ -3,7 +3,7 @@
 use clap::Parser;
 use rcli::{
     process_csv, process_decode, process_encode, process_genpass, process_text_sign,
-    Base64SubCommand, Opts, SubCommand,
+    process_text_verify, Base64SubCommand, Opts, SubCommand, TextSubCommand,
 };
 
 fn main() -> anyhow::Result<()> {
@@ -36,14 +36,12 @@ fn main() -> anyhow::Result<()> {
             }
         },
         SubCommand::Text(subcmd) => match subcmd {
-            rcli::TextSubCommand::Sign(opts) => match opts.format {
-                rcli::TextSignFormat::Ed25519 => todo!(),
-                rcli::TextSignFormat::Blake3 => {
-                    process_text_sign(&opts.input, &opts.key, opts.format)?
-                }
-            },
-            rcli::TextSubCommand::Verify(opts) => {
-                println!("{:?}", opts);
+            TextSubCommand::Sign(opts) => process_text_sign(&opts.input, &opts.key, opts.format)?,
+            TextSubCommand::Verify(opts) => {
+                process_text_verify(&opts.input, &opts.key, opts.format, &opts.sig)?;
+            }
+            TextSubCommand::Generate(opts) => {
+                eprintln!("{:?}", opts);
             }
         },
     }
