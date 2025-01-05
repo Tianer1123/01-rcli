@@ -1,9 +1,10 @@
+use super::process_genpass;
+use crate::{get_reader, TextSignFormat};
+use anyhow::Result;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use rand::rngs::OsRng;
 use std::{fs, io::Read, path::Path};
-
-use anyhow::Result;
 
 pub trait TextSign {
     /// Sign the data from the reader and return the signature
@@ -36,10 +37,6 @@ pub struct Ed25519Signer {
 pub struct Ed25519Verifier {
     key: VerifyingKey,
 }
-
-use crate::{get_reader, TextSignFormat};
-
-use super::process_genpass;
 
 pub fn process_text_sign(input: &str, key: &str, format: TextSignFormat) -> Result<String> {
     let mut reader = get_reader(input)?;
