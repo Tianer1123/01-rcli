@@ -2,6 +2,7 @@ use core::fmt;
 use std::{path::PathBuf, str::FromStr};
 
 use clap::Parser;
+use enum_dispatch::enum_dispatch;
 use tokio::fs;
 
 use crate::{process_text_generate, process_text_sign, process_text_verify, CmdExecutor};
@@ -9,6 +10,7 @@ use crate::{process_text_generate, process_text_sign, process_text_verify, CmdEx
 use super::{verify_file, verify_path};
 
 #[derive(Debug, Parser)]
+#[enum_dispatch(CmdExecutor)]
 pub enum TextSubCommand {
     #[command(about = "Sign a message with a private/shared key")]
     Sign(TextSignOpts),
@@ -116,15 +118,5 @@ impl CmdExecutor for TextGenerateKeyOpts {
             }
         }
         Ok(())
-    }
-}
-
-impl CmdExecutor for TextSubCommand {
-    async fn execute(self) -> anyhow::Result<()> {
-        match self {
-            TextSubCommand::Sign(opts) => opts.execute().await,
-            TextSubCommand::Verify(opts) => opts.execute().await,
-            TextSubCommand::Generate(opts) => opts.execute().await,
-        }
     }
 }
