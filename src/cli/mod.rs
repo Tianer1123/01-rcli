@@ -6,6 +6,8 @@ mod text;
 
 use std::path::{Path, PathBuf};
 
+use crate::CmdExecutor;
+
 pub use self::{
     base64::{Base64Format, Base64SubCommand},
     csv::OutputFormat,
@@ -28,12 +30,24 @@ pub enum SubCommand {
     Csv(CsvOpts),
     #[command(name = "genpass", about = "generate random pass")]
     Genpass(GenpassOpts),
-    #[command(subcommand)]
+    #[command(subcommand, about = "base64 encode/decode")]
     Base64(Base64SubCommand),
-    #[command(subcommand)]
+    #[command(subcommand, about = "text sign/verify")]
     Text(TextSubCommand),
-    #[command(subcommand)]
+    #[command(subcommand, about = "http server")]
     Http(HttpSubCommand),
+}
+
+impl CmdExecutor for SubCommand {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            SubCommand::Csv(opts) => opts.execute().await,
+            SubCommand::Genpass(opts) => opts.execute().await,
+            SubCommand::Base64(opts) => opts.execute().await,
+            SubCommand::Text(opts) => opts.execute().await,
+            SubCommand::Http(opts) => opts.execute().await,
+        }
+    }
 }
 
 pub fn verify_file(filename: &str) -> Result<String, &'static str> {
